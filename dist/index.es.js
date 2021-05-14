@@ -1,5 +1,15 @@
 import { useState, useCallback } from 'react';
 
+/**
+ * Access parsed storage values with referential equality in React render bodies.
+ * @argument key: string key of the storage item
+ * @argument defaultValue: default value if storage item is missing
+ * @argument down: function used to transform string into provided type T
+ * @argument up: function used to transform provided type T into string for storage
+ * @argument storage: Storage type one of
+ * @returns tuple similar to useState
+ * @use [value, setValue] = useStorageType<CustomType>('key', {}, stringToType, typeToString, localStorage)
+ */
 function useStorageType(key, defaultValue, down, up, storage) {
     if (storage === void 0) { storage = localStorage; }
     var _a = useState(function () {
@@ -23,7 +33,7 @@ function useStorageType(key, defaultValue, down, up, storage) {
  * @use [value, setValue] = useLocalStorageType<CustomType>('key', {}, stringToType, typeToString)
  */
 function useLocalStorageType(key, defaultValue, down, up) {
-    return useStorageType(key, defaultValue, down, up);
+    return useStorageType(key, defaultValue, down, up, localStorage);
 }
 /**
  * @argument key: string key of the sessionStorage item
@@ -54,7 +64,7 @@ function useLocalStorage(key, defaultValue) {
  * @use [value, setValue] = useLocalStorageBoolean('key', false)
  */
 function useLocalStorageBoolean(key, defaultValue) {
-    return useLocalStorageType(key, defaultValue, function (arg) { return (arg === 'true'); }, function (arg) { return arg.toString(); });
+    return useLocalStorageType(key, defaultValue, downBoolean, upToString);
 }
 /**
  * Shortcut to useLocalStorageType<number>(...)
@@ -64,7 +74,7 @@ function useLocalStorageBoolean(key, defaultValue) {
  * @use [value, setValue] = useLocalStorageNumber('key', 0)
  */
 function useLocalStorageNumber(key, defaultValue) {
-    return useLocalStorageType(key, defaultValue, function (arg) { return parseInt(arg, 10); }, function (arg) { return arg.toString(); });
+    return useLocalStorageType(key, defaultValue, downNumber, upToString);
 }
 /**
  * Shortcut to useLocalStorageType<StorageRecord>(...)
@@ -96,7 +106,7 @@ function useSessionStorage(key, defaultValue) {
  * @use [value, setValue] = useSessionStorageBoolean('key', false)
  */
 function useSessionStorageBoolean(key, defaultValue) {
-    return useSessionStorageType(key, defaultValue, function (arg) { return (arg === 'true'); }, function (arg) { return arg.toString(); });
+    return useSessionStorageType(key, defaultValue, downBoolean, upToString);
 }
 /**
  * Shortcut to useSessionStorageType<number>(...)
@@ -106,7 +116,7 @@ function useSessionStorageBoolean(key, defaultValue) {
  * @use [value, setValue] = useSessionStorageNumber('key', 0)
  */
 function useSessionStorageNumber(key, defaultValue) {
-    return useSessionStorageType(key, defaultValue, function (arg) { return parseInt(arg, 10); }, function (arg) { return arg.toString(); });
+    return useSessionStorageType(key, defaultValue, downNumber, upToString);
 }
 /**
  * Shortcut to useSessionStorageType<StorageRecord>(...)
@@ -123,10 +133,20 @@ function useSessionStorageRecord(key, defaultValue) {
 /**
  * Return whatever was passsed as a first argument.
  */
-function identity(arg) {
-    return arg;
-}
+function identity(arg) { return arg; }
+/**
+ * Defines how string booleans are evaluated.
+ */
+function downBoolean(arg) { return arg === 'true'; }
+/**
+ * Defines how string numbers are evaluated.
+ */
+function downNumber(arg) { return parseInt(arg, 10); }
+/**
+ * Defines basic toString implementation for referential equality in hooks.
+ */
+function upToString(arg) { return arg.toString(); }
 
 export default useStorageType;
-export { useLocalStorage, useLocalStorageBoolean, useLocalStorageNumber, useLocalStorageRecord, useLocalStorageType, useSessionStorage, useSessionStorageBoolean, useSessionStorageNumber, useSessionStorageRecord, useSessionStorageType };
+export { identity, useLocalStorage, useLocalStorageBoolean, useLocalStorageNumber, useLocalStorageRecord, useLocalStorageType, useSessionStorage, useSessionStorageBoolean, useSessionStorageNumber, useSessionStorageRecord, useSessionStorageType };
 //# sourceMappingURL=index.es.js.map

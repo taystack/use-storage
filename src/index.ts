@@ -1,11 +1,26 @@
 import { useState, useCallback } from 'react';
 
+export type StorageShape = {
+  setItem: (arg: string, val: string) => void,
+  getItem: (arg: string) => string | null
+}
+
+/**
+ * Access parsed storage values with referential equality in React render bodies.
+ * @argument key: string key of the storage item
+ * @argument defaultValue: default value if storage item is missing
+ * @argument down: function used to transform string into provided type T
+ * @argument up: function used to transform provided type T into string for storage
+ * @argument storage: Storage type one of 
+ * @returns tuple similar to useState
+ * @use [value, setValue] = useStorageType<CustomType>('key', {}, stringToType, typeToString, localStorage)
+ */
 export default function useStorageType<T>(
   key: string,
   defaultValue: T,
   down: (arg: string) => T,
   up: (arg: T) => string,
-  storage: Storage = localStorage
+  storage: Storage | StorageShape = localStorage
 ): [T, (arg: T) => void] {
   const [value, setValue] = useState<T>(() => {
     const val = storage.getItem(key)
@@ -35,7 +50,7 @@ export function useLocalStorageType<T>(
   down: (arg: string) => T,
   up: (arg: T) => string,
 ): [T, (arg: T) => void] {
-  return useStorageType<T>(key, defaultValue, down, up)
+  return useStorageType<T>(key, defaultValue, down, up, localStorage)
 }
 
 /**
@@ -74,7 +89,7 @@ export function useLocalStorage(key: string, defaultValue: string): [string, (ar
  * @use [value, setValue] = useLocalStorageBoolean('key', false)
  */
 export function useLocalStorageBoolean(key: string, defaultValue: boolean): [boolean, (arg: boolean) => void] {
-  return useLocalStorageType<boolean>(key, defaultValue, (arg: string) => (arg === 'true'), (arg: boolean) => arg.toString())
+  return useLocalStorageType<boolean>(key, defaultValue, downBoolean, upToString)
 }
 
 /**
@@ -85,7 +100,7 @@ export function useLocalStorageBoolean(key: string, defaultValue: boolean): [boo
  * @use [value, setValue] = useLocalStorageNumber('key', 0)
  */
 export function useLocalStorageNumber(key: string, defaultValue: number): [number, (arg: number) => void] {
-  return useLocalStorageType<number>(key, defaultValue, (arg: string) => parseInt(arg, 10), (arg: number) => arg.toString())
+  return useLocalStorageType<number>(key, defaultValue, downNumber, upToString)
 }
 
 /**
@@ -131,7 +146,7 @@ export function useSessionStorage(key: string, defaultValue: string): [string, (
  * @use [value, setValue] = useSessionStorageBoolean('key', false)
  */
 export function useSessionStorageBoolean(key: string, defaultValue: boolean): [boolean, (arg: boolean) => void] {
-  return useSessionStorageType<boolean>(key, defaultValue, (arg: string) => (arg === 'true'), (arg: boolean) => arg.toString())
+  return useSessionStorageType<boolean>(key, defaultValue, downBoolean, upToString)
 }
 
 /**
@@ -142,7 +157,7 @@ export function useSessionStorageBoolean(key: string, defaultValue: boolean): [b
  * @use [value, setValue] = useSessionStorageNumber('key', 0)
  */
 export function useSessionStorageNumber(key: string, defaultValue: number): [number, (arg: number) => void] {
-  return useSessionStorageType<number>(key, defaultValue, (arg: string) => parseInt(arg, 10), (arg: number) => arg.toString())
+  return useSessionStorageType<number>(key, defaultValue, downNumber, upToString)
 }
 
 /**
@@ -167,6 +182,19 @@ export function useSessionStorageRecord(
 /**
  * Return whatever was passsed as a first argument.
  */
-export function identity<T>(arg: T): T {
-  return arg
-}
+export function identity<T>(arg: T): T { return arg }
+
+/**
+ * Defines how string booleans are evaluated.
+ */
+function downBoolean(arg: string): boolean { return arg === 'true' }
+
+/**
+ * Defines how string numbers are evaluated.
+ */
+function downNumber(arg: string): number { return parseInt(arg, 10) }
+
+/**
+ * Defines basic toString implementation for referential equality in hooks.
+ */
+function upToString(arg: boolean | number): string { return arg.toString() }

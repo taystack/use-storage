@@ -1,4 +1,18 @@
-export default function useStorageType<T>(key: string, defaultValue: T, down: (arg: string) => T, up: (arg: T) => string, storage?: Storage): [T, (arg: T) => void];
+export declare type StorageShape = {
+    setItem: (arg: string, val: string) => void;
+    getItem: (arg: string) => string | null;
+};
+/**
+ * Access parsed storage values with referential equality in React render bodies.
+ * @argument key: string key of the storage item
+ * @argument defaultValue: default value if storage item is missing
+ * @argument down: function used to transform string into provided type T
+ * @argument up: function used to transform provided type T into string for storage
+ * @argument storage: Storage type one of
+ * @returns tuple similar to useState
+ * @use [value, setValue] = useStorageType<CustomType>('key', {}, stringToType, typeToString, localStorage)
+ */
+export default function useStorageType<T>(key: string, defaultValue: T, down: (arg: string) => T, up: (arg: T) => string, storage?: Storage | StorageShape): [T, (arg: T) => void];
 /**
  * @argument key: string key of the localStorage item
  * @argument defaultValue: default value if localStorage item is missing
@@ -90,3 +104,7 @@ export declare function useSessionStorageNumber(key: string, defaultValue: numbe
  * Basic primitives and their array formats are supported here.
  */
 export declare function useSessionStorageRecord(key: string, defaultValue: StorageRecord): [StorageRecord, (arg: StorageRecord) => void];
+/**
+ * Return whatever was passsed as a first argument.
+ */
+export declare function identity<T>(arg: T): T;

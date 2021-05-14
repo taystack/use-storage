@@ -1,5 +1,6 @@
 import useStorageType, {
   identity,
+  StorageShape,
   useLocalStorage,
   useLocalStorageBoolean,
   useLocalStorageNumber,
@@ -61,6 +62,14 @@ function customUserDown(arg: string): CustomUser {
     associations,
   }
 }
+function CustomStorage(): StorageShape { // Minimal implementation of a storage shape for this library.
+  let value: Record<string, string | null> = {}
+  return {
+    getItem: function(arg: string): string | null { return value[arg] ? value[arg] : null },
+    setItem: function(arg: string, val: string): void { value[arg] = val }
+  }
+}
+const customStorage = CustomStorage()
 // END TEST HELPERS
 
 describe('use-storage', () => {
@@ -118,6 +127,18 @@ describe('use-storage', () => {
       let [newValue] = result.current
       expect(newValue.associations.length).toEqual(1)
       expect(newValue.associations[0].name).toEqual('associationOne')
+    })
+
+    it('allows custom Storage shapes that implement getItem and setItem like Storage', () => {
+      const { result } = renderHook(() => useStorageType('cs_sanity_check', 'foobar', identity, identity, customStorage))
+      expect(result.current[0]).toEqual('foobar')
+      act(() => {
+        result.current[1]('FOOBAR')
+      })
+      expect(result.current[0]).toEqual('FOOBAR')
+      // Next use should grab the default in-memory value 'FOOBAR' even when default 'foobar' is passed.
+      const { result: nextResult } = renderHook(() => useStorageType('cs_sanity_check', 'foobar', identity, identity, customStorage))
+      expect(nextResult.current[0]).toEqual('FOOBAR')
     })
   })
   
